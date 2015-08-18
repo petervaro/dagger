@@ -68,7 +68,7 @@ g.print_graph()
 # Print topological sort
 print()
 topo_sort(g, debug=True)
-"""
+```
 
 And the output is:
 
