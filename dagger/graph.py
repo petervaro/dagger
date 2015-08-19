@@ -9,6 +9,12 @@ import itertools
 class Vertex:
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    @property
+    def id(self):
+        return self._id
+
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     def __init__(self, vertex_id):
         """Create a new Vertex object."""
         # Store property
@@ -135,7 +141,7 @@ class Graph:
         """
         Add new edge between the given vertices to graph.
         If vertices do not exist, then create and add new vertices to graph.
-        If edge already in graph return its id, if not, creat and store new
+        If edge already in graph return its id, if not, create and store new
         edge object and return the new id.
         """
         # If vertices are not in graph create them

@@ -5,40 +5,55 @@
 import itertools
 
 #------------------------------------------------------------------------------#
-class DAGCycleError(Exception):
-
-    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    def __init__(self, *message_args):
-        # Format message arguments and pass it to parent class
-        Exception.__init__(self, ' '.join(str(item) for item in message_args))
+class DAGCycleError(Exception): pass
 
 
 
 #------------------------------------------------------------------------------#
-def topo_sort(graph, debug=False):
-    """ Topological sort of direct acyclic graph """
+def topo_sort(graph, debug=False, tracking=False):
+    """Topological sort of directed acyclic graph"""
     # Necessary 'marks'
     FLAGS = 'done', 'idle'
-    # Declare a list for tracking
-    path = []
+    # Create a list for the processed output
+    sorted = []
 
-    # Create a recursively callable helper function
-    def visit(vertex):
-        # If vertex was visited before
-        if vertex.idle:
-            # Print out the path we have
-            print(*[v._id for v in path], sep='->')
-            # Raise
-            raise DAGCycleError('Graph has at least one cycle at', vertex._id)
+    # If tracking
+    if tracking:
+        # Create a list for tracking
+        tracked = []
+        # Create recursive helper function
+        def visit(vertex):
+            tracked.append(vertex)
 
-        # If vertex is not sorted yet
-        if not vertex.done:
-            vertex.idle = True
-            for neighbor in vertex.vertices():
-                visit(neighbor)
-            vertex.done = True
-            vertex.idle = False
-            path.append(vertex)
+            # If vertex was visited before
+            if vertex.idle:
+                raise DAGCycleError(tuple(v.id for v in tracked))
+
+            # If vertex is not yet sorted
+            if not vertex.done:
+                vertex.idle = True
+                for neighbor in vertex.vertices():
+                    visit(neighbor)
+                vertex.done = True
+                vertex.idle = False
+                sorted.append(vertex)
+                tracked.pop()
+    # If not tracking
+    else:
+        # Create recursive helper function
+        def visit(vertex):
+            # If vertex was visited before
+            if vertex.idle:
+                raise DAGCycleError(vertex.id)
+
+            # If vertex is not yet sorted
+            if not vertex.done:
+                vertex.idle = True
+                for neighbor in vertex.vertices():
+                    visit(neighbor)
+                vertex.done = True
+                vertex.idle = False
+                sorted.append(vertex)
 
     # Attach flags
     for _, vertex in graph.vertices():
@@ -46,7 +61,7 @@ def topo_sort(graph, debug=False):
             setattr(vertex, flag, False)
 
     # Create a list of all vertices that not sorted
-    queue = [vertex for vid, vertex in graph.vertices() if not vertex.done]
+    queue = [vertex for _, vertex in graph.vertices() if not vertex.done]
 
     # Test and sort vertices in queue
     while queue:
@@ -54,7 +69,7 @@ def topo_sort(graph, debug=False):
 
     # If debug mode is 'ON'
     if debug:
-        print(*[v._id for v in reversed(path)], sep=' -> ')
+        print(*[v._id for v in reversed(sorted)], sep=' -> ')
 
     # Detach properties
     for _, vertex in graph.vertices():
@@ -62,13 +77,13 @@ def topo_sort(graph, debug=False):
             delattr(vertex, flag)
 
     # Return iterator
-    return reversed(path)
+    return reversed(sorted)
 
 
 
 #------------------------------------------------------------------------------#
 def a_star(graph, start_id, goal_id):
-    """ A* shortest path algorithm  in direct acyclic graph """
+    """A* shortest path algorithm  in directed acyclic graph"""
     # Get vertices
     start = graph.vertex(start_id)
     goal  = graph.vertex(goal_id)
